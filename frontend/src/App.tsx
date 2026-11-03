@@ -30,10 +30,10 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<TabKey>(() => {
     const params = new URLSearchParams(window.location.search);
     const t = params.get('tab') as TabKey;
-    if (['overview', 'shopping', 'permissions', 'approvals', 'transactions', 'audit'].includes(t)) {
+    if (['shopping', 'overview', 'permissions', 'approvals', 'transactions', 'audit'].includes(t)) {
       return t;
     }
-    return 'overview';
+    return 'shopping';
   });
 
   // Core Data
@@ -349,7 +349,7 @@ export default function App() {
           width: '100%',
         }}
       >
-        <span>AgentPay Guard 2.0 — PayPal AI Hackathon 2026 Prototype</span>
+        <span>AgentPay Guard — Voice AI & Conversational Agent (GCET ASCEND Week-1 Showcase)</span>
         <span>•</span>
         <span style={{ color: 'var(--accent)' }}>PayPal Sandbox — No real money</span>
         <span>•</span>

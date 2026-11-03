@@ -38,6 +38,12 @@ const DEMO_SCENARIOS = [
     text: 'Find a shadowtech gadget for my desk.',
     hint: 'Merchant ShadowTech is NOT in approved list.',
   },
+  {
+    chip: 'Unclear Voice',
+    chipClass: 'chip-blocked',
+    text: 'uh um hello',
+    hint: 'Deterministic check rejects unclear speech (422); 0 DB rows created.',
+  },
 ];
 
 // Browser Web Speech API SpeechRecognition compatibility constructor
@@ -246,7 +252,7 @@ export default function RequestPanel({ onProposalCreated }: Props) {
           <div className="card-icon">
             <Sparkles size={18} />
           </div>
-          <h2 style={{ margin: 0 }}>AI Shopping Agent</h2>
+          <h2 style={{ margin: 0 }}>Voice Shopping Assistant</h2>
         </div>
 
         {/* Audio control actions */}
@@ -330,7 +336,7 @@ export default function RequestPanel({ onProposalCreated }: Props) {
 
         <div className="form-group" style={{ width: '100%', minWidth: 0 }}>
           <label className="form-label" htmlFor="shopping-request">
-            Natural-Language Shopping Request
+            Speak via Microphone or Type Shopping Request
           </label>
           <textarea
             id="shopping-request"

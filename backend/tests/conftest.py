@@ -79,6 +79,10 @@ def mock_ai_fallback(monkeypatch):
     from app import config
     settings = config.get_settings()
     monkeypatch.setattr(settings, "ai_provider", "none")
+    monkeypatch.setattr(settings, "paypal_client_id", "mock-paypal-client-id")
+    monkeypatch.setattr(settings, "paypal_client_secret", "mock-paypal-client-secret")
+    from app.services import paypal_service
+    monkeypatch.setattr(paypal_service, "get_access_token", lambda: "mock-paypal-token")
 
 
 @pytest.fixture

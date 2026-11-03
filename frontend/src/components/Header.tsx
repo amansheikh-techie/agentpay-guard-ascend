@@ -32,6 +32,10 @@ export default function Header() {
 
       {/* Badges */}
       <div className="header-badges">
+        {/* Voice AI Showcase Badge */}
+        <span className="badge badge-voice" style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8', border: '1px solid rgba(99, 102, 241, 0.35)' }}>
+          🎙️ Voice AI Agent
+        </span>
         {/* Sandbox warning — always visible */}
         <span className="badge badge-sandbox" title="PayPal Sandbox — test mode only">
           <AlertTriangle size={11} />

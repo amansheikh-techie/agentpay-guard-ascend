@@ -189,7 +189,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   className="btn btn-sm btn-primary"
                   onClick={onNavigateToShopping}
                 >
-                  Propose First Purchase →
+                  Launch Voice Assistant →
                 </button>
               </div>
             )}

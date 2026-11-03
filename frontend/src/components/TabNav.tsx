@@ -11,8 +11,8 @@ interface TabNavProps {
 
 export const TabNav: React.FC<TabNavProps> = ({ activeTab, onTabChange, pendingCount = 0 }) => {
   const tabs: { key: TabKey; label: string; badge?: number }[] = [
+    { key: 'shopping', label: '🎙️ Voice Assistant' },
     { key: 'overview', label: 'Overview' },
-    { key: 'shopping', label: 'AI Shopping' },
     { key: 'permissions', label: 'Permissions' },
     { key: 'approvals', label: 'Approvals', badge: pendingCount > 0 ? pendingCount : undefined },
     { key: 'transactions', label: 'Transactions' },
