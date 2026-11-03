@@ -6,6 +6,7 @@
 ---
 
 ### ℹ️ Built On Note
+
 **AgentPay Guard** was originally built for the **PayPal AI Hackathon 2026** as a deterministic safety and policy boundary for AI commerce. For the **GCET ASCEND Week-1 Showcase**, the platform was advanced with a **voice-first conversational layer**, introducing real-time browser speech recognition, spoken policy verdicts, audio playback controls, and voice-specific safety boundaries.
 
 ---
@@ -63,6 +64,7 @@ As artificial intelligence systems evolve from passive chat interfaces into auto
 ```
 
 ### Trust Boundary Invariants
+
 - **Backend Authority:** Product prices, approved merchants, policy evaluations, and payment captures are strictly computed on the server from authoritative SQLite records.
 - **Voice Discovery Only:** Voice input is purely an interaction mechanism. No payment API can be triggered by speech alone.
 - **Input Mode Parity:** Submitting an identical shopping query via voice or text produces identical policy decisions, prices, and merchant resolutions.
@@ -94,6 +96,7 @@ As artificial intelligence systems evolve from passive chat interfaces into auto
 ## How to Run
 
 ### Prerequisites
+
 - **Python 3.11+** (`python --version`)
 - **Node.js 18+** & **npm 9+** (`node --version`, `npm --version`)
 - **Git** (`git --version`)
@@ -103,6 +106,7 @@ As artificial intelligence systems evolve from passive chat interfaces into auto
 ---
 
 ### Step 1: Clone and Navigate
+
 ```powershell
 git clone https://github.com/amansheikh-techie/agentpay-guard.git agentpay-guard-ascend
 cd agentpay-guard-ascend
@@ -111,6 +115,7 @@ cd agentpay-guard-ascend
 ---
 
 ### Step 2: Backend Setup
+
 ```powershell
 cd backend
 
@@ -126,7 +131,9 @@ Copy-Item .env.example .env
 ```
 
 #### Configure `backend/.env` (Optional)
+
 Open `backend\.env` in an editor. Leave keys empty to use the deterministic offline fallback mode, or add your credentials:
+
 ```ini
 APP_ENV=development
 DATABASE_URL=sqlite:///./agentpay_guard.db
@@ -142,22 +149,27 @@ PAYPAL_MODE=sandbox
 PAYPAL_CLIENT_ID=your_sandbox_client_id
 PAYPAL_CLIENT_SECRET=your_sandbox_client_secret
 ```
+
 > **Security Notice:** Never commit `.env` or secrets to version control.
 
 ---
 
 ### Step 3: Start the Backend Server
+
 ```powershell
 # From the backend/ directory with .venv activated:
 uvicorn app.main:app --reload --port 8000
 ```
+
 - Health Check: [http://localhost:8000/api/health](http://localhost:8000/api/health)
 - Interactive Swagger API Docs: [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ---
 
 ### Step 4: Frontend Setup & Launch
+
 Open a **new terminal** window:
+
 ```powershell
 cd G:\agentpay-guard-ascend\frontend
 
@@ -167,22 +179,27 @@ npm install
 # Start Vite development server
 npm run dev
 ```
+
 Open [http://localhost:5173](http://localhost:5173) in Google Chrome or Microsoft Edge. The app opens directly to the **🎙️ Voice Assistant** tab.
 
 ---
 
 ### Step 5: Running Automated Backend Tests
+
 Open a terminal in `backend/` with the virtual environment activated:
+
 ```powershell
 cd G:\agentpay-guard-ascend\backend
 .\.venv\Scripts\Activate.ps1
 pytest tests/ -v
 ```
+
 *(All 81 automated tests run in fast offline fallback mode with in-memory SQLite).*
 
 ---
 
 ### Step 6: Building Frontend for Production
+
 ```powershell
 cd G:\agentpay-guard-ascend\frontend
 npm run build
@@ -226,8 +243,8 @@ These scenarios can be tested hands-free via the microphone or by clicking the q
 
 | Member | Showcase Role & Responsibilities |
 | :--- | :--- |
-| **[Name 1]** | **Voice AI & Conversational UX Engineer**<br>• Designed and implemented Web Speech API integration (recognition, interim transcript, and speech synthesis).<br>• Built audio controls (mute/unmute, audio playback cancellation, microphone error recovery).<br>• Reorganized UI to make the Voice Assistant front and center for the ASCEND showcase. |
-| **[Name 2]** | **Backend Policy Engine & Payment Guardrails Engineer**<br>• Developed deterministic Python spending policy engine (caps, budgets, merchant allowlists).<br>• Implemented unclear speech rejection (HTTP 422) and deterministic spoken response generation.<br>• Built PayPal Sandbox Orders v2 server capture, approval binding invariant, and automated test suite. |
+| **[Sanjay]** | **Voice AI & Conversational UX Engineer**<br>• Designed and implemented Web Speech API integration (recognition, interim transcript, and speech synthesis).<br>• Built audio controls (mute/unmute, audio playback cancellation, microphone error recovery).<br>• Reorganized UI to make the Voice Assistant front and center for the ASCEND showcase. |
+| **[Aman]** | **Backend Policy Engine & Payment Guardrails Engineer**<br>• Developed deterministic Python spending policy engine (caps, budgets, merchant allowlists).<br>• Implemented unclear speech rejection (HTTP 422) and deterministic spoken response generation.<br>• Built PayPal Sandbox Orders v2 server capture, approval binding invariant, and automated test suite. |
 
 ---
 
