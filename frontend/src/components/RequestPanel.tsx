@@ -66,6 +66,7 @@ export default function RequestPanel({ onProposalCreated }: Props) {
   const [speechError, setSpeechError] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [voiceLang, setVoiceLang] = useState<'en-IN' | 'hi-IN'>('en-IN');
 
   const recognitionRef = useRef<any>(null);
 
@@ -90,8 +91,8 @@ export default function RequestPanel({ onProposalCreated }: Props) {
     };
   }, []);
 
-  // Voice synthesizer helper preferring en-IN or en-US voices
-  const speakVerdict = (text: string) => {
+  // Voice synthesizer helper preferring selected language, en-IN, or en-US voices
+  const speakVerdict = (text: string, lang: string = voiceLang) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window) || isMuted) {
       return;
     }
@@ -100,13 +101,20 @@ export default function RequestPanel({ onProposalCreated }: Props) {
     const utterance = new SpeechSynthesisUtterance(text);
     const voices = window.speechSynthesis.getVoices();
 
-    // Prefer Indian English or US English voices
-    const preferredVoice =
-      voices.find((v) => v.lang === 'en-IN') ||
-      voices.find((v) => v.lang === 'en_IN') ||
-      voices.find((v) => v.lang.startsWith('en-US')) ||
-      voices.find((v) => v.lang.startsWith('en')) ||
-      null;
+    // Prefer Hindi voice for hi-IN, otherwise Indian English or US English
+    let preferredVoice = null;
+    if (lang === 'hi-IN') {
+      preferredVoice =
+        voices.find((v) => v.lang === 'hi-IN' || v.lang === 'hi_IN' || v.lang.startsWith('hi')) ||
+        voices.find((v) => v.lang === 'en-IN' || v.lang === 'en_IN') ||
+        null;
+    } else {
+      preferredVoice =
+        voices.find((v) => v.lang === 'en-IN' || v.lang === 'en_IN') ||
+        voices.find((v) => v.lang.startsWith('en-US')) ||
+        voices.find((v) => v.lang.startsWith('en')) ||
+        null;
+    }
 
     if (preferredVoice) {
       utterance.voice = preferredVoice;
@@ -135,7 +143,7 @@ export default function RequestPanel({ onProposalCreated }: Props) {
     setIsMuted((prev) => !prev);
   };
 
-  const submitProposal = async (textToSubmit: string, mode: 'text' | 'voice' = 'text') => {
+  const submitProposal = async (textToSubmit: string, mode: 'text' | 'voice' = 'text', lang: string = voiceLang) => {
     const clean = textToSubmit.trim();
     if (!clean || loading) return;
 
@@ -144,18 +152,18 @@ export default function RequestPanel({ onProposalCreated }: Props) {
     setSpeechError(null);
 
     try {
-      const proposal = await propose(clean, mode);
+      const proposal = await propose(clean, mode, lang);
       onProposalCreated(proposal);
 
       // Speak the deterministic verdict aloud if voice synthesis is enabled
       if (proposal.spoken_response) {
-        speakVerdict(proposal.spoken_response);
+        speakVerdict(proposal.spoken_response, lang);
       }
     } catch (err: unknown) {
       const msg = (err as Error).message || 'Failed to submit shopping request.';
       setError(msg);
       if (mode === 'voice') {
-        speakVerdict(msg);
+        speakVerdict(msg, lang);
       }
     } finally {
       setLoading(false);
@@ -174,7 +182,7 @@ export default function RequestPanel({ onProposalCreated }: Props) {
       const recognition = new (SpeechClass as any)();
       recognition.continuous = false;
       recognition.interimResults = true;
-      recognition.lang = 'en-US';
+      recognition.lang = voiceLang;
 
       recognition.onstart = () => {
         setIsListening(true);
@@ -199,7 +207,7 @@ export default function RequestPanel({ onProposalCreated }: Props) {
         if (final && final.trim().length >= 3) {
           setRequestText(final.trim());
           setSelectedScenarioIndex(null);
-          submitProposal(final.trim(), 'voice');
+          submitProposal(final.trim(), 'voice', voiceLang);
         }
       };
 
@@ -314,6 +322,28 @@ export default function RequestPanel({ onProposalCreated }: Props) {
               >
                 {isListening ? <MicOff size={18} /> : <Mic size={18} />}
               </button>
+              <select
+                className="voice-lang-select"
+                value={voiceLang}
+                onChange={(e) => setVoiceLang(e.target.value as 'en-IN' | 'hi-IN')}
+                disabled={isListening || loading}
+                title="Select Speech Recognition Language"
+                aria-label="Speech Recognition Language"
+                style={{
+                  fontSize: '0.75rem',
+                  padding: '0.35rem 0.5rem',
+                  borderRadius: 'var(--radius-sm, 6px)',
+                  background: 'var(--surface, #1e293b)',
+                  color: 'var(--text-primary, #f8fafc)',
+                  border: '1px solid var(--border, #334155)',
+                  cursor: 'pointer',
+                  fontWeight: 500,
+                  outline: 'none',
+                }}
+              >
+                <option value="en-IN">English India (en-IN)</option>
+                <option value="hi-IN">Hindi (hi-IN)</option>
+              </select>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <span className="voice-status-text">
                   {isListening ? 'Listening… speak your shopping request now' : 'Voice Assistant Ready'}

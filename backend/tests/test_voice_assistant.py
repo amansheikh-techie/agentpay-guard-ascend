@@ -261,3 +261,123 @@ def test_overview_counters_after_reset_demo(client, clean_test_db):
     assert summary["blocked_count"] == 0
     assert summary["daily_spent_cents"] == 0
     assert summary["remaining_cents"] == policy_data["total_budget_cents"]
+
+
+def test_hindi_voice_request_passes_to_ai_and_creates_proposal(client, clean_test_db):
+    """
+    Hindi voice input (hi-IN) with 4+ characters:
+    - Bypasses English-only keyword check
+    - Proceeds to AI / deterministic product matching
+    - Creates proposal with policy evaluation and spoken_response
+    """
+    res = client.post(
+        "/api/agent/propose",
+        json={
+            "user_request": "मुझे एक वायरलेस माउस चाहिए",
+            "input_mode": "voice",
+            "language": "hi-IN",
+        },
+    )
+    assert res.status_code == 201
+    data = res.json()
+    assert data["input_mode"] == "voice"
+    assert data["selected_product_id"] == "tc-wireless-mouse"
+    assert data["policy_decision"] == "ALLOWED"
+    assert "Wireless Mouse" in data["spoken_response"]
+
+
+def test_hinglish_voice_request_passes_to_ai_and_creates_proposal(client, clean_test_db):
+    """
+    Hinglish voice input (en-IN) with 4+ characters:
+    - Non-empty input of 4+ characters in en-IN mode goes to AI for product matching
+    - Successfully proposes product and evaluates policy
+    """
+    res = client.post(
+        "/api/agent/propose",
+        json={
+            "user_request": "ek badhiya wireless mouse chahiye",
+            "input_mode": "voice",
+            "language": "en-IN",
+        },
+    )
+    assert res.status_code == 201
+    data = res.json()
+    assert data["input_mode"] == "voice"
+    assert data["selected_product_id"] == "tc-wireless-mouse"
+    assert data["policy_decision"] == "ALLOWED"
+
+
+def test_hindi_and_hinglish_filler_noise_rejected(client, clean_test_db):
+    """
+    In hi-IN and en-IN modes, short inputs (< 4 chars) and filler/noise words
+    are still rejected with HTTP 422 and create 0 DB rows.
+    """
+    db = TestSessionLocal()
+    initial_proposals = db.query(Proposal).count()
+    db.close()
+
+    fillers = [
+        ("uh um hello", "hi-IN"),
+        ("umm uhh", "en-IN"),
+        ("नमस्ते हेलो", "hi-IN"),
+        ("arre suno", "en-IN"),
+        ("abc", "hi-IN"),
+    ]
+
+    for utterance, lang in fillers:
+        res = client.post(
+            "/api/agent/propose",
+            json={
+                "user_request": utterance,
+                "input_mode": "voice",
+                "language": lang,
+            },
+        )
+        assert res.status_code == 422
+        assert "unclear" in res.json()["detail"].lower() or "repeat" in res.json()["detail"].lower()
+
+    db = TestSessionLocal()
+    assert db.query(Proposal).count() == initial_proposals
+    db.close()
+
+
+def test_voice_approval_or_payment_command_rejected_in_hindi_and_hinglish(client, clean_test_db):
+    """
+    Voice commands attempting approval or payment in Hindi or Hinglish:
+    - Must be rejected with HTTP 422
+    - Return exact message: 'Voice can't approve or pay. Please use the Approve button after reviewing the purchase.'
+    - Voice must still NEVER approve or pay
+    - Zero DB proposals, zero payments
+    """
+    db = TestSessionLocal()
+    initial_proposals = db.query(Proposal).count()
+    initial_payments = db.query(Payment).count()
+    db.close()
+
+    commands = [
+        ("pay karo", "en-IN"),
+        ("approve karo", "en-IN"),
+        ("kharid lo", "en-IN"),
+        ("पे करो", "hi-IN"),
+        ("भुगतान करो", "hi-IN"),
+        ("खरीद लो", "hi-IN"),
+        ("order confirm karo", "en-IN"),
+    ]
+
+    for cmd, lang in commands:
+        res = client.post(
+            "/api/agent/propose",
+            json={
+                "user_request": cmd,
+                "input_mode": "voice",
+                "language": lang,
+            },
+        )
+        assert res.status_code == 422
+        data = res.json()
+        assert data["detail"] == "Voice can't approve or pay. Please use the Approve button after reviewing the purchase."
+
+    db = TestSessionLocal()
+    assert db.query(Proposal).count() == initial_proposals
+    assert db.query(Payment).count() == initial_payments
+    db.close()

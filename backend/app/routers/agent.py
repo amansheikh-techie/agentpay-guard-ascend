@@ -88,41 +88,62 @@ def _extract_requirements(
 def _is_voice_approval_or_payment_command(text: str, catalogue_products: list[Product]) -> bool:
     """
     Detects if a voice request is only an approval or payment command
-    (e.g., approve, pay, confirm, buy it, checkout) rather than a product query.
+    (e.g., approve, pay, confirm, buy it, checkout) in English, Hindi, or Hinglish
+    rather than a product query.
     Voice cannot authorize or execute payments; human approval is mandatory.
     """
     cleaned = text.strip().lower()
-    cleaned_no_punct = re.sub(r"[^\w\s]", " ", cleaned).strip()
-    tokens = set(re.findall(r"\b[a-z0-9]+\b", cleaned_no_punct))
+    cleaned_no_punct = re.sub(r"[^a-zA-Z0-9\u0900-\u097f\s]", " ", cleaned).strip()
+    tokens = set(re.findall(r"[a-zA-Z0-9\u0900-\u097f]+", cleaned_no_punct))
     if not tokens:
         return False
 
     # If any specific catalogue product or category is mentioned, treat as shopping search
-    item_tokens = {"mouse", "keyboard", "headset", "lamp", "desk", "hub", "audio", "gadget", "charger", "cable", "stand", "notebook", "pen"}
+    item_tokens = {
+        "mouse", "keyboard", "headset", "lamp", "desk", "hub", "audio", "gadget",
+        "charger", "cable", "stand", "notebook", "pen",
+        "माउस", "कीबोर्ड", "हेडसेट", "लैम्प", "डेस्क", "हब", "गैजेट"
+    }
     for p in catalogue_products:
         if p.name:
-            item_tokens.update(re.findall(r"\b[a-z0-9]+\b", p.name.lower()))
+            item_tokens.update(re.findall(r"[a-zA-Z0-9\u0900-\u097f]+", p.name.lower()))
         if p.category:
-            item_tokens.update(re.findall(r"\b[a-z0-9]+\b", p.category.lower()))
+            item_tokens.update(re.findall(r"[a-zA-Z0-9\u0900-\u097f]+", p.category.lower()))
     # Remove generic words from item_tokens
-    item_tokens.difference_update({"and", "the", "for", "with", "a", "an", "in", "of", "to", "it", "this", "my", "me"})
+    item_tokens.difference_update({
+        "and", "the", "for", "with", "a", "an", "in", "of", "to", "it", "this", "my", "me",
+        "hai", "aur", "ka", "ki", "ke", "ko", "se", "ek", "yeh", "woh"
+    })
 
     if tokens.intersection(item_tokens):
         return False
 
-    # Check direct phrases
+    # Check direct phrases (English, Hinglish, Hindi Devanagari)
     approval_phrases = [
         "buy it", "buy this", "pay now", "pay it", "pay this", "checkout now",
         "approve and pay", "confirm and pay", "proceed to pay", "confirm purchase",
-        "confirm order", "approve order", "approve purchase"
+        "confirm order", "approve order", "approve purchase",
+        # Hinglish
+        "approve karo", "pay karo", "payment karo", "kharid lo", "kharidlo",
+        "buy karo", "confirm karo", "order karo", "order confirm karo", "paisa do",
+        # Hindi Devanagari
+        "पे करो", "भुगतान करो", "खरीद लो", "कन्फर्म करो", "अप्रूव करो", "ऑर्डर करो"
     ]
     for phrase in approval_phrases:
         if phrase in cleaned_no_punct:
             return True
 
     # Standalone core approval/payment words combined with common fillers
-    approval_core_words = {"approve", "pay", "confirm", "checkout"}
-    fillers = {"please", "yes", "yeah", "yep", "ok", "okay", "go", "ahead", "proceed", "now", "it", "this", "that", "the", "order", "purchase", "payment", "and"}
+    approval_core_words = {
+        "approve", "pay", "confirm", "checkout",
+        "पे", "भुगतान", "अप्रूव", "कन्फर्म", "खरीदो"
+    }
+    fillers = {
+        "please", "yes", "yeah", "yep", "ok", "okay", "go", "ahead", "proceed",
+        "now", "it", "this", "that", "the", "order", "purchase", "payment", "and",
+        "karo", "kardo", "kar", "lo", "do", "haan", "accha", "theek", "bhai",
+        "करो", "कर", "दो", "लो", "हाँ", "ठीक"
+    }
 
     if tokens.intersection(approval_core_words) and tokens.issubset(approval_core_words | fillers):
         return True
@@ -134,21 +155,48 @@ def _is_voice_approval_or_payment_command(text: str, catalogue_products: list[Pr
     return False
 
 
-def _is_unclear_voice_input(text: str, catalogue_products: list[Product]) -> bool:
+def _is_unclear_voice_input(
+    text: str,
+    catalogue_products: list[Product],
+    language: Optional[str] = None,
+) -> bool:
     """
     Deterministic check for voice input before calling LLM or creating orders.
     Detects empty transcripts, short noise, or inputs lacking recognizable items/intent.
+
+    In Hindi (hi-IN) or English India / Hinglish (en-IN) modes, non-empty input of 4 or more
+    characters still goes to the AI for product matching, while filler and noise are still rejected.
     """
-    cleaned = text.strip().lower()
+    cleaned = text.strip()
     if len(cleaned) < 4:
         return True
 
-    # Filler words or noise with no actionable intent
-    filler_only = {"uh", "um", "hmm", "hello", "hi", "hey", "test", "testing", "what", "audio", "mic"}
-    tokens = set(re.findall(r"\b[a-z0-9]+\b", cleaned))
+    cleaned_lower = cleaned.lower()
+    cleaned_no_punct = re.sub(r"[^a-zA-Z0-9\u0900-\u097f\s]", " ", cleaned_lower).strip()
+    tokens = set(re.findall(r"[a-zA-Z0-9\u0900-\u097f]+", cleaned_no_punct))
+
+    # Filler words or noise with no actionable intent in English, Hindi, and Hinglish
+    filler_only = {
+        "uh", "um", "hmm", "hello", "hi", "hey", "test", "testing", "what", "audio", "mic", "check",
+        "umm", "uhh", "haan", "haa", "arey", "arre", "accha", "achha", "suno", "theek",
+        "अरे", "नमस्ते", "हेलो", "हैलो", "हम्म", "ऊँ", "सुनो", "हाँ", "अच्छा", "टेस्ट"
+    }
     if not tokens or tokens.issubset(filler_only):
         return True
 
+    # Detect if request is in Hindi / Hinglish / en-IN / hi-IN modes
+    is_hindi_script = any("\u0900" <= c <= "\u097f" for c in cleaned)
+    is_indic_mode = (
+        (language is not None and language.strip().lower() in ["hi-in", "hi", "hindi", "en-in", "hinglish"])
+        or is_hindi_script
+    )
+
+    if is_indic_mode:
+        # In en-IN / hi-IN modes: non-empty input of 4+ characters that is not filler
+        # goes to the AI for product matching
+        return False
+
+    # Default English check: verify recognizable shopping keywords or catalogue terms
     shopping_keywords = {
         "buy", "find", "get", "need", "want", "purchase", "order", "mouse", "keyboard",
         "headset", "lamp", "desk", "hub", "audio", "gadget", "charger", "cable", "stand",
@@ -157,11 +205,11 @@ def _is_unclear_voice_input(text: str, catalogue_products: list[Product]) -> boo
     }
     for p in catalogue_products:
         if p.name:
-            shopping_keywords.update(re.findall(r"\b[a-z0-9]+\b", p.name.lower()))
+            shopping_keywords.update(re.findall(r"[a-zA-Z0-9\u0900-\u097f]+", p.name.lower()))
         if p.category:
-            shopping_keywords.update(re.findall(r"\b[a-z0-9]+\b", p.category.lower()))
+            shopping_keywords.update(re.findall(r"[a-zA-Z0-9\u0900-\u097f]+", p.category.lower()))
         if p.merchant_name:
-            shopping_keywords.update(re.findall(r"\b[a-z0-9]+\b", p.merchant_name.lower()))
+            shopping_keywords.update(re.findall(r"[a-zA-Z0-9\u0900-\u097f]+", p.merchant_name.lower()))
 
     if not tokens.intersection(shopping_keywords):
         return True
@@ -227,7 +275,7 @@ def propose_purchase(
         )
 
     # Deterministic check for unclear voice input: creates no proposal, no order, no PayPal call
-    if payload.input_mode == "voice" and _is_unclear_voice_input(payload.user_request, products):
+    if payload.input_mode == "voice" and _is_unclear_voice_input(payload.user_request, products, language=payload.language):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Speech unclear. Please repeat your shopping request with an item name or description.",

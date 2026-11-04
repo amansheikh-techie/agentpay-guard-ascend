@@ -100,8 +100,8 @@ def _deterministic_fallback(
         features = [f.lower() for f in prod.get("features", [])]
         price_cents = prod.get("price_cents", 0)
 
-        # Tokenize user request into words
-        tokens = set(re.findall(r"\b[a-z0-9]+\b", req_lower))
+        # Tokenize user request into words (including Devanagari)
+        tokens = set(re.findall(r"\b[\w]+\b", req_lower, flags=re.UNICODE))
 
         for token in tokens:
             if len(token) < 3:
@@ -116,18 +116,22 @@ def _deterministic_fallback(
                 if token in f:
                     score += 3
 
-        # Exact word matches
-        if any(w in req_lower for w in ["mouse", "mice"]) and "mouse" in name:
+        # Exact word matches (English & Hindi)
+        if any(w in req_lower for w in ["mouse", "mice", "माउस"]) and "mouse" in name:
             score += 10
         if "monitor" in req_lower and "monitor" in name:
             score += 10
         if "chair" in req_lower and "chair" in name:
             score += 10
-        if "keyboard" in req_lower and "keyboard" in name:
+        if any(w in req_lower for w in ["keyboard", "कीबोर्ड"]) and "keyboard" in name:
             score += 10
-        if any(w in req_lower for w in ["headset", "audio", "headphone", "earphone", "earbud"]) and ("headset" in name or "audio" in name or "earbud" in name):
+        if any(w in req_lower for w in ["headset", "audio", "headphone", "earphone", "earbud", "हेडसेट", "ऑडियो"]) and ("headset" in name or "audio" in name or "earbud" in name):
             score += 10
-        if "hub" in req_lower and "hub" in name:
+        if any(w in req_lower for w in ["hub", "हब"]) and "hub" in name:
+            score += 10
+        if any(w in req_lower for w in ["gadget", "गैजेट"]) and "gadget" in name:
+            score += 10
+        if any(w in req_lower for w in ["lamp", "लैम्प", "लाइट"]) and "lamp" in name:
             score += 10
 
         scored_products.append((score, price_cents, prod))

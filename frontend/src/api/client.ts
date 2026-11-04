@@ -69,10 +69,18 @@ export const fetchSummary = (): Promise<SummaryResponse> =>
 export const fetchProducts = (): Promise<Product[]> => request<Product[]>('/products');
 
 // ── Agent propose ────────────────────────────────────────────────────────────
-export const propose = (userRequest: string, inputMode: 'text' | 'voice' = 'text'): Promise<Proposal> =>
+export const propose = (
+  userRequest: string,
+  inputMode: 'text' | 'voice' = 'text',
+  language?: string
+): Promise<Proposal> =>
   request<Proposal>('/agent/propose', {
     method: 'POST',
-    body: JSON.stringify({ user_request: userRequest, input_mode: inputMode }),
+    body: JSON.stringify({
+      user_request: userRequest,
+      input_mode: inputMode,
+      ...(language ? { language } : {}),
+    }),
   });
 
 // ── Audit ────────────────────────────────────────────────────────────────────

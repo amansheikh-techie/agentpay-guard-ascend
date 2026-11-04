@@ -93,6 +93,7 @@ class ExtractedRequirements(BaseModel):
 class ProposeRequest(BaseModel):
     user_request: str = Field(..., max_length=1000)
     input_mode: Literal["text", "voice"] = "text"
+    language: Optional[str] = Field(default=None, description="Recognition language code (e.g. en-IN, hi-IN)")
 
     @field_validator("user_request")
     @classmethod
