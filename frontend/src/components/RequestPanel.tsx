@@ -312,46 +312,45 @@ export default function RequestPanel({ onProposalCreated }: Props) {
         {speechSupported && (
           <div className="voice-toolbar">
             <div className="voice-status-group">
-              <button
-                type="button"
-                className={`mic-btn ${isListening ? 'listening' : ''}`}
-                onClick={isListening ? handleStopListening : handleStartListening}
-                disabled={loading}
-                title={isListening ? 'Listening... click to stop' : 'Click to speak shopping request'}
-                aria-label={isListening ? 'Stop listening' : 'Start voice input'}
-              >
-                {isListening ? <MicOff size={18} /> : <Mic size={18} />}
-              </button>
-              <select
-                className="voice-lang-select"
-                value={voiceLang}
-                onChange={(e) => setVoiceLang(e.target.value as 'en-IN' | 'hi-IN')}
-                disabled={isListening || loading}
-                title="Select Speech Recognition Language"
-                aria-label="Speech Recognition Language"
-                style={{
-                  fontSize: '0.75rem',
-                  padding: '0.35rem 0.5rem',
-                  borderRadius: 'var(--radius-sm, 6px)',
-                  background: 'var(--surface, #1e293b)',
-                  color: 'var(--text-primary, #f8fafc)',
-                  border: '1px solid var(--border, #334155)',
-                  cursor: 'pointer',
-                  fontWeight: 500,
-                  outline: 'none',
-                }}
-              >
-                <option value="en-IN">English India (en-IN)</option>
-                <option value="hi-IN">Hindi (hi-IN)</option>
-              </select>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span className="voice-status-text">
-                  {isListening ? 'Listening… speak your shopping request now' : 'Voice Assistant Ready'}
-                </span>
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
-                  {isListening ? 'Say an item and price (e.g. "Find a mouse under $35")' : 'Click microphone to speak or type in the box below'}
-                </span>
+              <div className="voice-controls-row">
+                <button
+                  type="button"
+                  className={`mic-btn ${isListening ? 'listening' : ''}`}
+                  onClick={isListening ? handleStopListening : handleStartListening}
+                  disabled={loading}
+                  title={isListening ? 'Listening... click to stop' : 'Click to speak shopping request'}
+                  aria-label={isListening ? 'Stop listening' : 'Start voice input'}
+                >
+                  {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+                </button>
+                <select
+                  className="voice-lang-select"
+                  value={voiceLang}
+                  onChange={(e) => setVoiceLang(e.target.value as 'en-IN' | 'hi-IN')}
+                  disabled={isListening || loading}
+                  title="Select Speech Recognition Language"
+                  aria-label="Speech Recognition Language"
+                >
+                  <option value="en-IN">English India (en-IN)</option>
+                  <option value="hi-IN">Hindi (hi-IN)</option>
+                </select>
               </div>
+
+              <span className={`voice-pill-badge ${isListening ? 'listening' : 'ready'}`}>
+                <span className="voice-pill-dot" />
+                {isListening ? 'Listening…' : 'Ready'}
+              </span>
+            </div>
+
+            <div className="voice-status-info">
+              <span className="voice-status-text">
+                {isListening ? 'Listening… speak your shopping request now' : 'Voice Assistant Ready'}
+              </span>
+              <span className="voice-status-sub">
+                {isListening
+                  ? 'Say an item and price (e.g. "Find a mouse under $35")'
+                  : 'Click microphone to speak or type in the box below'}
+              </span>
             </div>
           </div>
         )}
