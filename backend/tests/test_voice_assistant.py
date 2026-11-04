@@ -75,6 +75,58 @@ def test_voice_request_over_limit_blocked(client, clean_test_db):
     assert "approvals tab" not in spoken.lower()
 
 
+def test_voice_approval_or_payment_command_rejected_with_explanation(client, clean_test_db):
+    """
+    When voice request is only an approval or payment command (approve, pay, confirm, buy it, checkout):
+    - Returns HTTP 422
+    - Returns exact detail: "Voice can't approve or pay. Please use the Approve button after reviewing the purchase."
+    - Zero DB proposals, zero payments/orders, zero PayPal calls
+    """
+    commands = [
+        "approve",
+        "pay",
+        "confirm",
+        "buy it",
+        "checkout",
+        "please approve",
+        "confirm and pay",
+        "pay now",
+    ]
+
+    db = TestSessionLocal()
+    initial_proposals = db.query(Proposal).count()
+    initial_payments = db.query(Payment).count()
+    db.close()
+
+    for cmd in commands:
+        res = client.post(
+            "/api/agent/propose",
+            json={"user_request": cmd, "input_mode": "voice"},
+        )
+        assert res.status_code == 422
+        data = res.json()
+        assert data["detail"] == "Voice can't approve or pay. Please use the Approve button after reviewing the purchase."
+
+    # Zero DB rows created
+    db = TestSessionLocal()
+    assert db.query(Proposal).count() == initial_proposals
+    assert db.query(Payment).count() == initial_payments
+    db.close()
+
+
+def test_voice_approval_rejection_does_not_block_product_requests(client, clean_test_db):
+    """
+    Ensure shopping queries that contain words like 'buy' with an item
+    (e.g. 'Buy a wireless mouse under $35') are NOT falsely rejected as approval commands.
+    """
+    res = client.post(
+        "/api/agent/propose",
+        json={"user_request": "Buy a wireless mouse under $35", "input_mode": "voice"},
+    )
+    assert res.status_code == 201
+    assert res.json()["policy_decision"] == "ALLOWED"
+
+
 def test_unclear_voice_input_creates_no_proposal_or_order(client, clean_test_db):
     """
     Unclear or empty voice input:

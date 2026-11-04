@@ -85,6 +85,55 @@ def _extract_requirements(
 
 
 
+def _is_voice_approval_or_payment_command(text: str, catalogue_products: list[Product]) -> bool:
+    """
+    Detects if a voice request is only an approval or payment command
+    (e.g., approve, pay, confirm, buy it, checkout) rather than a product query.
+    Voice cannot authorize or execute payments; human approval is mandatory.
+    """
+    cleaned = text.strip().lower()
+    cleaned_no_punct = re.sub(r"[^\w\s]", " ", cleaned).strip()
+    tokens = set(re.findall(r"\b[a-z0-9]+\b", cleaned_no_punct))
+    if not tokens:
+        return False
+
+    # If any specific catalogue product or category is mentioned, treat as shopping search
+    item_tokens = {"mouse", "keyboard", "headset", "lamp", "desk", "hub", "audio", "gadget", "charger", "cable", "stand", "notebook", "pen"}
+    for p in catalogue_products:
+        if p.name:
+            item_tokens.update(re.findall(r"\b[a-z0-9]+\b", p.name.lower()))
+        if p.category:
+            item_tokens.update(re.findall(r"\b[a-z0-9]+\b", p.category.lower()))
+    # Remove generic words from item_tokens
+    item_tokens.difference_update({"and", "the", "for", "with", "a", "an", "in", "of", "to", "it", "this", "my", "me"})
+
+    if tokens.intersection(item_tokens):
+        return False
+
+    # Check direct phrases
+    approval_phrases = [
+        "buy it", "buy this", "pay now", "pay it", "pay this", "checkout now",
+        "approve and pay", "confirm and pay", "proceed to pay", "confirm purchase",
+        "confirm order", "approve order", "approve purchase"
+    ]
+    for phrase in approval_phrases:
+        if phrase in cleaned_no_punct:
+            return True
+
+    # Standalone core approval/payment words combined with common fillers
+    approval_core_words = {"approve", "pay", "confirm", "checkout"}
+    fillers = {"please", "yes", "yeah", "yep", "ok", "okay", "go", "ahead", "proceed", "now", "it", "this", "that", "the", "order", "purchase", "payment", "and"}
+
+    if tokens.intersection(approval_core_words) and tokens.issubset(approval_core_words | fillers):
+        return True
+
+    # "buy it", "buy this", "just buy it"
+    if "buy" in tokens and tokens.issubset({"buy", "it", "this", "that", "now", "please", "yes", "okay", "ok", "just"}):
+        return True
+
+    return False
+
+
 def _is_unclear_voice_input(text: str, catalogue_products: list[Product]) -> bool:
     """
     Deterministic check for voice input before calling LLM or creating orders.
@@ -168,6 +217,13 @@ def propose_purchase(
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Catalogue is currently unavailable.",
+        )
+
+    # Deterministic check: voice request attempting approval or payment
+    if payload.input_mode == "voice" and _is_voice_approval_or_payment_command(payload.user_request, products):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Voice can't approve or pay. Please use the Approve button after reviewing the purchase.",
         )
 
     # Deterministic check for unclear voice input: creates no proposal, no order, no PayPal call

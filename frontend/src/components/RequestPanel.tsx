@@ -155,7 +155,7 @@ export default function RequestPanel({ onProposalCreated }: Props) {
       const msg = (err as Error).message || 'Failed to submit shopping request.';
       setError(msg);
       if (mode === 'voice') {
-        speakVerdict('Speech unclear. Please repeat your shopping request mentioning the item you want.');
+        speakVerdict(msg);
       }
     } finally {
       setLoading(false);
