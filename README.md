@@ -5,6 +5,31 @@
 
 ---
 
+## ⚡ At a Glance
+
+**Shop by voice in English or Hinglish. The AI suggests, the rules decide, and only YOU can approve payment.**
+
+> [!IMPORTANT]
+> Voice can never approve or pay. A misheard word, background TV or a prompt injection cannot spend money.
+
+### Key Facts
+
+| Feature | Specification |
+| :--- | :--- |
+| 🎙️ **Voice input** | English (India) + Hindi/Hinglish |
+| 🧠 **AI role** | Suggests a product ID only, never price or verdict |
+| 🛡️ **Decision maker** | Server-side policy engine |
+| 👆 **Payment** | Explicit button click + PayPal Sandbox capture |
+| ✅ **Automated tests** | 87 tests passed (`pytest tests/ -v`) |
+
+![Voice AI](https://img.shields.io/badge/Voice%20AI-Web%20Speech%20API-0ea5e9)
+![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688)
+![React](https://img.shields.io/badge/Frontend-React%2019-61dafb)
+![PayPal Sandbox](https://img.shields.io/badge/Payments-PayPal%20Sandbox-003087)
+![Tests](https://img.shields.io/badge/Tests-87%20Passed-brightgreen)
+
+---
+
 ### ℹ️ Built On Note
 
 **AgentPay Guard** was originally built for the **PayPal AI Hackathon 2026** as a deterministic safety and policy boundary for AI commerce. For the **GCET ASCEND Week-1 Showcase**, the platform was advanced with a **voice-first conversational layer**, introducing real-time browser speech recognition, spoken policy verdicts, audio playback controls, and voice-specific safety boundaries.
@@ -45,6 +70,21 @@ As artificial intelligence systems evolve from passive chat interfaces into auto
 - **Human-in-the-Loop Approval:** Even when a voice request is within spending limits, **voice alone can never authorize or execute a payment**. The user must review the authoritative summary and explicitly click to authorize checkout.
 
 **Core Principle:** Voice proposes → Gemini identifies → Policy engine decides → Human approves → Backend captures & verifies.
+
+---
+
+## 🎯 Who It Helps and Use Cases
+
+- **Voice-first and accessibility users:** Individuals with low vision, limited mobility, or hands-busy situations can discover products and hear authoritative verdicts completely hands-free.
+- **Families and teams:** Households and shared team workspaces can safely delegate purchasing requests to an AI assistant under strictly enforced per-order and total budget caps.
+- **Developers and AI agent builders:** Engineers building conversational commerce gain a reusable, production-tested architecture where the AI proposes, deterministic rules decide, and humans approve.
+- **Multilingual shoppers:** Users in diverse linguistic regions can speak naturally in English (India), Hindi, or Hinglish with ambient noise filtering and native voice responses.
+
+---
+
+## 💡 Why It Matters
+
+Conversational voice AI offers incredible speed and convenience, but voice alone is fundamentally untrustworthy for executing irreversible real-world actions like financial checkout. Ambient audio, conversational hallucinations, or acoustic misinterpretations can silently trigger unintended spending if an agent has direct access to payment credentials. True trust requires deterministic, immutable safety boundaries enforced outside the LLM context. AgentPay Guard demonstrates this essential paradigm: voice empowers natural discovery, deterministic rules guarantee safety, and explicit human consent protects the wallet.
 
 ---
 
@@ -259,6 +299,9 @@ These scenarios can be tested hands-free via the microphone or by clicking the q
 - **Connectivity:** Speech recognition needs internet to function.
 - **Language Support:** Speech input supports English (India) and Hindi/Hinglish through the language selector. Product matching in Hindi depends on the Gemini AI provider being reachable (the offline fallback matcher is English keywords only).
 - **Payment Environment:** PayPal Sandbox only — prototype environment with no real currency.
+
+> [!NOTE]
+> Prototype scope: PayPal Sandbox with test money and a small demo catalog. It demonstrates the design; it is not a production payment product.
 
 ---
 
