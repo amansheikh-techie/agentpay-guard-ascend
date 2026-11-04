@@ -108,7 +108,7 @@ As artificial intelligence systems evolve from passive chat interfaces into auto
 ### Step 1: Clone and Navigate
 
 ```powershell
-git clone https://github.com/amansheikh-techie/agentpay-guard.git agentpay-guard-ascend
+git clone https://github.com/amansheikh-techie/agentpay-guard-ascend.git
 cd agentpay-guard-ascend
 ```
 
@@ -171,7 +171,7 @@ uvicorn app.main:app --reload --port 8000
 Open a **new terminal** window:
 
 ```powershell
-cd G:\agentpay-guard-ascend\frontend
+cd frontend
 
 # Install dependencies
 npm install
@@ -189,7 +189,7 @@ Open [http://localhost:5173](http://localhost:5173) in Google Chrome or Microsof
 Open a terminal in `backend/` with the virtual environment activated:
 
 ```powershell
-cd G:\agentpay-guard-ascend\backend
+cd backend
 .\.venv\Scripts\Activate.ps1
 pytest tests/ -v
 ```
@@ -201,7 +201,7 @@ pytest tests/ -v
 ### Step 6: Building Frontend for Production
 
 ```powershell
-cd G:\agentpay-guard-ascend\frontend
+cd frontend
 npm run build
 ```
 
