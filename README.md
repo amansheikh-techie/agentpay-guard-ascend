@@ -17,6 +17,14 @@
 
 ---
 
+## Why This Fits Voice AI
+
+- **Voice-First Shopping:** Users speak natural-language shopping requests hands-free and receive immediate visual feedback with live interim transcripts.
+- **Spoken Policy Verdicts:** The assistant speaks clear, deterministic verdicts aloud, stating the product name, authoritative USD price, and whether the purchase is allowed or why it is blocked.
+- **Safe Voice Checkout Boundary:** While voice enables seamless discovery, it enforces an explicit safety boundary — voice can never authorize or execute a payment, preventing accidental, ambient, or unverified checkout.
+
+---
+
 ## Problem Statement
 
 As artificial intelligence systems evolve from passive chat interfaces into autonomous agents capable of interacting with payment systems, granting them unrestricted access to financial checkout creates severe risks:
@@ -239,12 +247,27 @@ These scenarios can be tested hands-free via the microphone or by clicking the q
 
 ---
 
+## Limitations
+
+- **Browser Support:** Chrome or Edge only for speech input (Web Speech API).
+- **Connectivity:** Speech recognition needs internet to function.
+- **Language Support:** English only.
+- **Payment Environment:** PayPal Sandbox only — prototype environment with no real currency.
+
+---
+
+## Development Notes
+
+The project was built with AI coding assistance and the policy engine and tests were reviewed by the team.
+
+---
+
 ## Team Contributions
 
-| Member | Showcase Role & Responsibilities |
+| Member | Role |
 | :--- | :--- |
-| **[Sanjay]** | **Voice AI & Conversational UX Engineer**<br>• Designed and implemented Web Speech API integration (recognition, interim transcript, and speech synthesis).<br>• Built audio controls (mute/unmute, audio playback cancellation, microphone error recovery).<br>• Reorganized UI to make the Voice Assistant front and center for the ASCEND showcase. |
-| **[Aman]** | **Backend Policy Engine & Payment Guardrails Engineer**<br>• Developed deterministic Python spending policy engine (caps, budgets, merchant allowlists).<br>• Implemented unclear speech rejection (HTTP 422) and deterministic spoken response generation.<br>• Built PayPal Sandbox Orders v2 server capture, approval binding invariant, and automated test suite. |
+| Sanjay | FRONTEND |
+| Aman | FRONTEND and BACKEND |
 
 ---
 
