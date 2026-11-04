@@ -84,17 +84,21 @@ As artificial intelligence systems evolve from passive chat interfaces into auto
 1. **Browser Speech Input (Web Speech API):**
    - Click the microphone button in the **🎙️ Voice Assistant** tab to speak natural-language shopping requests.
    - Live visual transcript with audio pulse animation displays recognition progress in real time.
-2. **Deterministic Spoken Feedback (`window.speechSynthesis`):**
+2. **Language Selector (English India & Hindi / Hinglish):**
+   - Interactive language selector next to the microphone sets `SpeechRecognition.lang` (`en-IN` for English India, `hi-IN` for Hindi / Hinglish).
+   - Allows users to speak shopping queries in English (India), Hindi, or Hinglish seamlessly.
+   - Backend unclear-speech filter adapts so non-empty Hindi and Hinglish inputs (4+ characters) proceed to AI product matching, while filler and noise are still deterministically rejected.
+3. **Deterministic Spoken Feedback (`window.speechSynthesis`):**
    - Spoken responses are generated deterministically by the backend rule engine.
    - Verbally recites the selected product name, exact USD price, policy outcome (`ALLOWED` or `BLOCKED` with the explicit rule name), and an approval reminder.
-   - Automatically selects natural Indian English (`en-IN`) or US English (`en-US`) voices.
-3. **Interactive Audio Controls:**
+   - Automatically selects natural Hindi (`hi-IN`), Indian English (`en-IN`), or US English (`en-US`) voices.
+4. **Interactive Audio Controls:**
    - **Voice Reply Toggle:** Easily toggle between "Voice Reply ON" and "Muted".
    - **Stop Audio Button:** Instantly halts in-flight speech synthesis playback (`window.speechSynthesis.cancel()`).
-4. **Ambient Noise & Unclear Speech Rejection:**
+5. **Ambient Noise & Unclear Speech Rejection:**
    - Detects filler words, empty noise, or unintelligible audio before invoking AI models or database queries.
    - Rejects unclear input with HTTP 422 and a spoken repeat prompt without creating database rows or charging budget.
-5. **Graceful Browser Fallback:**
+6. **Graceful Browser Fallback:**
    - Supported on Google Chrome, Microsoft Edge, and modern Chromium browsers.
    - In unsupported browsers, the microphone button is cleanly hidden while text-based conversational shopping remains 100% operational.
    - Provides clear visual alerts if microphone permissions are denied.
@@ -202,7 +206,7 @@ cd backend
 pytest tests/ -v
 ```
 
-*(All 81 automated tests run in fast offline fallback mode with in-memory SQLite).*
+*(All 87 automated tests run in fast offline fallback mode with in-memory SQLite).*
 
 ---
 
@@ -225,6 +229,8 @@ These scenarios can be tested hands-free via the microphone or by clicking the q
 | **2** | *"I need a high-end mechanical keyboard for typing."* | Voice / Text | TechCore Mechanical Keyboard (`$79.99 USD`) | **`BLOCKED`** | `MAX_ORDER_AMOUNT_EXCEEDED` | *"Proposed [DEMO] TechCore Mechanical Keyboard for $79.99 USD. This purchase is BLOCKED by MAX_ORDER_AMOUNT_EXCEEDED and cannot be approved."* (Recommends in-policy alternatives). |
 | **3** | *"Find a shadowtech gadget for my desk."* | Voice / Text | ShadowTech Gadget (`$25.00 USD`) | **`BLOCKED`** | `MERCHANT_NOT_APPROVED` | *"Proposed [DEMO] ShadowTech Gadget for $25.00 USD. This purchase is BLOCKED by MERCHANT_NOT_APPROVED and cannot be approved."* |
 | **4** | *"uh um hello"* *(or noise/silence)* | Voice | N/A | **HTTP 422** | `UNCLEAR_INPUT` | Server rejects immediately with: *"Speech unclear. Please repeat your shopping request with an item name or description."* **0 database rows, 0 orders, 0 API calls**. |
+| **5** | *"मुझे एक वायरलेस माउस चाहिए"* / *"ek badhiya wireless mouse chahiye"* | Voice (hi-IN / en-IN) | TechCore Wireless Mouse (`$29.99 USD`) | **`ALLOWED`** | `[]` | *"Proposed [DEMO] TechCore Wireless Mouse for $29.99 USD. This purchase is ALLOWED by your policy. Final approval is required in the Approvals tab."* |
+| **6** | *"pay karo"* / *"पे करो"* / *"approve karo"* *(voice approval refusal)* | Voice (hi-IN / en-IN) | N/A | **HTTP 422** | `VOICE_PAYMENT_FORBIDDEN` | Server strictly refuses payment via voice: *"Voice can't approve or pay. Please use the Approve button after reviewing the purchase."* **0 orders, 0 PayPal calls**. |
 
 > For the comprehensive 10-scenario manual test checklist (including audio controls, text parity, permission handling, and demo reset), see [docs/TEST_SCENARIOS.md](./docs/TEST_SCENARIOS.md).
 
@@ -236,14 +242,14 @@ These scenarios can be tested hands-free via the microphone or by clicking the q
 | :--- | :--- | :--- |
 | **Frontend** | React 19 + TypeScript + Vite | Interactive mission control SPA with real-time audio controls. |
 | **Voice Recognition** | Web Speech API (`SpeechRecognition`) | Client-side speech-to-text with continuous interim transcript feedback. |
-| **Voice Synthesis** | Web Speech API (`SpeechSynthesis`) | Browser-native voice engine with Indian/US English voice preferences. |
+| **Voice Synthesis** | Web Speech API (`SpeechSynthesis`) | Browser-native voice engine with Hindi (`hi-IN`) and Indian/US English voice preferences. |
 | **Backend Framework** | Python 3.11 + FastAPI + Uvicorn | High-performance asynchronous REST API. |
 | **Validation & Schema** | Pydantic v2 + Pydantic-Settings | Strict request/response modeling and environment validation. |
 | **Database & ORM** | SQLite + SQLAlchemy 2.0 | Authoritative catalog, proposals, payments, and immutable audit logs. |
 | **AI / Intent Engine** | Google Gemini / OpenAI-Compatible | Extracts category and suggests candidate catalog product IDs. |
 | **Offline Fallback** | Deterministic Keyword Engine | Offline matcher tagged `[Demo Fallback Mode]` when no AI key is provided. |
 | **Payment Gateway** | PayPal Orders v2 REST API (Sandbox) | Cryptographically verified server-side payment capture and verification. |
-| **Test Suite** | pytest + pytest-asyncio + TestClient | 81 automated tests verifying rules, voice invariants, and API security. |
+| **Test Suite** | pytest + pytest-asyncio + TestClient | 87 automated tests verifying rules, voice invariants, and API security. |
 
 ---
 
@@ -251,7 +257,7 @@ These scenarios can be tested hands-free via the microphone or by clicking the q
 
 - **Browser Support:** Chrome or Edge only for speech input (Web Speech API).
 - **Connectivity:** Speech recognition needs internet to function.
-- **Language Support:** English only.
+- **Language Support:** Speech input supports English (India) and Hindi/Hinglish through the language selector. Product matching in Hindi depends on the Gemini AI provider being reachable (the offline fallback matcher is English keywords only).
 - **Payment Environment:** PayPal Sandbox only — prototype environment with no real currency.
 
 ---

@@ -22,6 +22,7 @@ This document details the test scenarios, execution steps, expected policy decis
 3. **Browser:** Google Chrome or Microsoft Edge (Chromium with Web Speech API support).
 4. **Microphone:** Ensure microphone permissions are granted for `http://localhost:5173`.
 5. **Initial Policy Defaults:** Total Budget: `$100.00`, Per-Order Cap: `$40.00`, Approved Merchants: `TechCore`, `HomePlus`, Human Approval: `Required`.
+6. **Language Selector:** The voice assistant supports English India (`en-IN`) and Hindi (`hi-IN`). Select your preferred language next to the mic.
 
 ---
 
@@ -159,6 +160,45 @@ This document details the test scenarios, execution steps, expected policy decis
   2. Click **"Reset Demo"** on the Overview tab or Policy Overview card.
 - **Expected Result:** Budget restores to $100.00, per-order cap to $40.00, spend counters reset to $0.00, and previous payments are preserved in historical records without breaking active counters.
 
+### Scenario 11: Hindi / Hinglish Shopping Request (Voice)
+
+| Attribute | Details |
+| :--- | :--- |
+| **User Request** | *"मुझे एक वायरलेस माउस चाहिए"* (Hindi) or *"ek badhiya wireless mouse chahiye"* (Hinglish) |
+| **Input Mode** | Voice (Microphone with `hi-IN` or `en-IN` selected) |
+| **Catalog Match** | `[DEMO] TechCore Wireless Mouse` (ID: `tc-wireless-mouse`, Price: `$29.99 USD`) |
+| **Expected Decision** | `ALLOWED` |
+| **Reason Codes** | `[]` (meets all spending constraints) |
+| **Spoken Response** | *"Proposed [DEMO] TechCore Wireless Mouse for $29.99 USD. This purchase is ALLOWED by your policy. Final approval is required in the Approvals tab."* |
+| **Safety Invariant** | Non-empty input of 4+ characters in Hindi/Hinglish modes is accepted by the unclear-speech filter and evaluated by the policy engine. Final checkout still requires explicit human click in Approvals tab. |
+
+#### Verification Steps:
+1. Select **Hindi (hi-IN)** or **English India (en-IN)** from the language selector next to the microphone.
+2. Click the microphone button and speak: *"मुझे एक वायरलेस माउस चाहिए"* (or in Hinglish: *"ek badhiya wireless mouse chahiye"*).
+3. Observe live transcript captures the utterance.
+4. Verify HTTP 201 response with `policy_decision: "ALLOWED"`.
+5. Listen to browser speech synthesis reading the verdict.
+6. Verify the proposal is queued in the **Approvals** tab and no funds are deducted automatically.
+
+---
+
+### Scenario 12: Voice Approval / Payment Command Refusal
+
+| Attribute | Details |
+| :--- | :--- |
+| **User Request** | *"pay karo"*, *"पे करो"*, *"approve karo"*, or *"kharid lo"* |
+| **Input Mode** | Voice (Microphone with `en-IN` or `hi-IN` selected) |
+| **Expected Decision** | Rejection with HTTP 422 Unprocessable Entity |
+| **Response Detail** | `{"detail": "Voice can't approve or pay. Please use the Approve button after reviewing the purchase."}` |
+| **Spoken Response** | Spoken refusal: *"Voice can't approve or pay. Please use the Approve button after reviewing the purchase."* |
+| **Safety Invariant** | **Voice must never approve or pay.** 0 proposals created in SQLite, 0 orders created, 0 PayPal calls made. |
+
+#### Verification Steps:
+1. Click the microphone button and speak an approval command: *"pay karo"* or *"पे करो"* or *"approve karo"*.
+2. Verify the server immediately returns HTTP 422 Unprocessable Entity.
+3. Observe the alert banner and spoken response instructing the user that approval requires the manual Approve button.
+4. Check the database / Overview tab: verify proposal count, orders, and spend counters remain at 0.
+
 ---
 
 ## Summary Matrix
@@ -170,3 +210,5 @@ This document details the test scenarios, execution steps, expected policy decis
 | **3** | Unapproved Merchant | *"Find a shadowtech gadget for my desk."* | Voice | `BLOCKED` | `MERCHANT_NOT_APPROVED` |
 | **4** | Unclear Speech Rejection | *"uh um hello"* | Voice | HTTP 422 | `UNCLEAR_INPUT` (0 DB writes) |
 | **5** | Text Parity Check | Same as Scenario 1 | Text | `ALLOWED` | `[]` (Identical outcome) |
+| **6** | Hindi / Hinglish Purchase | *"मुझे एक वायरलेस माउस चाहिए"* / *"ek wireless mouse chahiye"* | Voice (`hi-IN` / `en-IN`) | `ALLOWED` | `[]` |
+| **7** | Voice Approval Refusal | *"pay karo"* / *"पे करो"* / *"approve karo"* | Voice (`hi-IN` / `en-IN`) | HTTP 422 | `VOICE_PAYMENT_FORBIDDEN` (0 DB writes) |
