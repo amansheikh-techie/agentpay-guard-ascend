@@ -38,7 +38,7 @@
 
 ## Demo Video
 
-📹 **ASCEND Week-1 Showcase Demo:** [Watch the Video Walkthrough](https://drive.google.com/file/d/19JFU0TYfyfxxOTkRvhzCcgKM4huLyzYr/view?usp=sharing)
+📹 **ASCEND Week-1 Showcase Demo:** [Watch the Video Walkthrough](https://drive.google.com/file/d/12T3LD6VADNYvv5g6HfAHEyAoJX9vKq7l/view?usp=drivesdk)
 
 ---
 
